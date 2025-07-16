@@ -112,6 +112,52 @@ def recv_content(c: socket, author: str) -> None:
     f.write(data)
 
 
+def decode_client_packet(c: socket, author: str) -> None:
+    content_len = b''
+    while len(content_len) < HEADER:
+        chunk = c.recv(HEADER - len(content_len))
+        content_len += chunk
+
+    content_len = struct.unpack("!I", content_len)[0]
+    # print(f"Content-Len: {content_len}")
+
+    packet = b''
+    while len(packet) < content_len:
+        chunk = c.recv(content_len - len(packet))
+        packet += chunk
+
+    # print(f"FULL PACKET\n{packet}")
+    offset = 0
+    req_type_len = struct.unpack("B", packet[:1])[0]
+
+    offset += 1 
+
+    # req_type = packet[offset: offset + req_type_len]
+    # print(f"<S> Request type: {req_type.decode(FORMAT)}")
+
+    offset += req_type_len
+    sent_len = struct.unpack("!I", packet[offset: offset + 4])[0]
+    offset += 4
+
+    # sent = packet[offset: offset + sent_len]
+    # print(f"Client sent: {sent.decode(FORMAT)}")
+
+    offset += sent_len
+    tag_len = struct.unpack("!I", packet[offset: offset + 4])[0]
+
+    offset += 4
+    # tag = packet[offset: offset + tag_len]
+    # print(f"Tag-N: {tag}")
+
+    offset += tag_len
+
+    data = packet[offset:].decode(FORMAT)
+    f = file_handler(("./test/" + author), "a")
+    f.write(data)
+
+    print("done writing to file")
+
+
 def handle_conn(client: socket) -> None:
     details = recv_ack_header(client)
     n_packets = int(details[0])
@@ -122,7 +168,8 @@ def handle_conn(client: socket) -> None:
         if packet_sync == n_packets:
             print("done over here, not allowed to send more than proposed")
             break
-        recv_content(client, author)
+        # recv_content(client, author)
+        decode_client_packet(client, author)
         packet_sync += 1
         # print(f"pack-sync -> {packet_sync}")
 

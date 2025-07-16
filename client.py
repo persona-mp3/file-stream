@@ -64,36 +64,87 @@ def test_ack_header():
 # test_ack_header()
 
 
-def stream_file(fname: str) -> None:
+# def stream_file(fname: str) -> None:
+#     s = create_client(ADDR)
+#     file = file_handler(fname)
+#     content = file.readlines()
+#
+#     codec_author = fname.encode(FORMAT)
+#     codec_content = [line.encode(FORMAT) for line in content]
+#     N_PACKETS = len(codec_content)
+#     print("total-packets to send: ", N_PACKETS)
+#
+#     # if the server did not send an Acknowledged status we abort the mission for now
+#     status = send_ack(s, N_PACKETS, codec_author)
+#     if not status:
+#         exit()
+#
+#     packet_sync = 0
+#     enc_type = struct.pack("B", len(TYPE_DATA_TRANS))
+#     while packet_sync < N_PACKETS:
+#         body = enc_type + TYPE_DATA_TRANS + codec_content[packet_sync]
+#         header = struct.pack("!I", len(body))
+#
+#         packet = header + body
+#         # time.sleep(0.5)
+#         s.sendall(packet)
+#
+#         packet_sync += 1
+#         # print(f"packet-sync: {packet_sync} -> {codec_content[packet_sync]}")
+#
+#     print("done")
+#     s.close()
+
+
+def streamer(fname: str) -> None:
+    print(f"streaming {fname}")
     s = create_client(ADDR)
-    file = file_handler(fname)
-    content = file.readlines()
+    req_type = "Packet".encode("utf-8")
+    req_len = struct.pack("B", len(req_type))
 
-    codec_author = fname.encode(FORMAT)
-    codec_content = [line.encode(FORMAT) for line in content]
-    N_PACKETS = len(codec_content)
-    print("total-packets to send: ", N_PACKETS)
+    FORMAT = "utf-8"
 
-    # if the server did not send an Acknowledged status we abort the mission for now
-    status = send_ack(s, N_PACKETS, codec_author)
+    file = file_handler(fname, "rb")
+    packet_sync = 0 
+
+    CHUNK_SIZE = 1024
+    chunks = []
+    while True:
+        chunk = file.read(CHUNK_SIZE)
+        if not chunk:
+            print("no more content to read from file, closing file")
+            file.close()
+            break
+        chunks.append(chunk)
+
+    N_PACKETS = len(chunks)
+    print("total packets to send:", N_PACKETS)
+
+    status = send_ack(s, N_PACKETS, fname.encode(FORMAT))
+    
     if not status:
+        print("Server did not acknowledge request")
+        s.close()
         exit()
 
-    packet_sync = 0
-    enc_type = struct.pack("B", len(TYPE_DATA_TRANS))
     while packet_sync < N_PACKETS:
-        body = enc_type + TYPE_DATA_TRANS + codec_content[packet_sync]
+        tag = str(packet_sync).encode(FORMAT)
+        sent = str(packet_sync).encode(FORMAT)
+
+        enc_tag_len = struct.pack("!I", len(tag))
+        enc_sent_len = struct.pack("!I", len(sent))
+
+        body = req_len + req_type + enc_sent_len + sent + enc_tag_len + tag + chunks[packet_sync]
         header = struct.pack("!I", len(body))
 
         packet = header + body
-        # time.sleep(0.5)
+
         s.sendall(packet)
-
         packet_sync += 1
-        # print(f"packet-sync: {packet_sync} -> {codec_content[packet_sync]}")
 
-    print("done")
+    print("all packets sent, closing socket")
     s.close()
+    print("Connection closed")
 
-
-stream_file("BinarySearch.java")
+# create_data_packet()
+# stream_file("BinarySearch.java")

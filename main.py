@@ -1,5 +1,5 @@
 import sys 
-
+from client import streamer
 
 
 def read_args() -> None:
@@ -8,6 +8,8 @@ def read_args() -> None:
         print("no arguments passed in")
         exit()
     files = args[1:]
-    print(f"files to send to server, confirm? {files}")
+    for file in files:
+        streamer(file)
+
 
 read_args()

@@ -1,4 +1,5 @@
 import struct
+import socket
 from utils.utils import file_handler
 
 
@@ -103,7 +104,7 @@ def decode_packet(packet: bytes):
     print(f"\n\n === \ns - packet-tag {tag}, size {content_len}\n\n === \n")
 
 
-def create_data_packet(fname: str) -> None:
+def create_data_packet(s: socket, fname: str) -> None:
     req_type = "Packet".encode("utf-8")
     req_len = struct.pack("B", len(req_type))
 
