@@ -96,8 +96,4 @@ def stream_file(fname: str) -> None:
     s.close()
 
 
-# stream_file("BinarySearch.java")
-
-def stream_file2(fname: str) -> None:
-
-    pass
+stream_file("BinarySearch.java")
