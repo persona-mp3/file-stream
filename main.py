@@ -1,6 +1,7 @@
 import sys 
 import os 
 from client import streamer
+from utils.utils import file_handler
 
 
 def read_args() -> None:
@@ -9,17 +10,43 @@ def read_args() -> None:
         print("no arguments passed in")
         exit()
     files = args[1:]
-    for file in files:
-        streamer(file)
+    print(os.path.basename(os.getcwd()))
 
 
-# read_args()
-# def mkdirs(path_name: str) -> None:
-#     isFolder = path_name.contains("/")
-#     file_name = path_name
-#     folder_name = ""
-#     if isFolder:
-#         folder_stuct = path_name.split("/")
-#         file_name = folder_struct[1]
-#         folder_name = folder_struct[0]
-#     pass
+read_args()
+
+
+def isDir(fname) -> list:
+    ff = []
+    if "/" in fname:
+        ff.append(fname.split("/"))
+    else:
+        # ff.append(fname)
+        return fname
+
+    path_struct = "/".join(ff[0])
+    # print(path_struct)
+
+    return path_struct
+
+
+def mm(fname):
+    file_path = isDir(fname)
+    print("creating ", file_path)
+    if "/" in file_path: 
+        try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        except Exception as e:
+            print(f"An error occured in making sub_dirs for {file_path}: {e}")
+
+    f = file_handler(file_path, "a")
+    f.write("BOMBORASCLAT\n Watching Patheon")
+    f.close()
+
+
+a = "rengoku2/kol1/rai.js"
+b = "tanjiro"
+
+
+# mm(b)
+# mm(b)

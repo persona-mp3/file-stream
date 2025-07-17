@@ -58,14 +58,16 @@ def recv_ack_header(c: socket) -> Sequence[str]:
 
     decoded_content = content.decode(FORMAT)
     req_body = decoded_content.split()
+    print(req_body)
 
     if req_body[0] != ACK:        # return (req_body[0], req_body)
         return 
 
     print(f"Request-Type: {req_body[0]}")
     print(f"Packets-to-recieve: {req_body[1]}")
-    print(f"Author: {req_body[2]}")
-    print(f"Client-start: {req_body[3]}")
+    print(f"Working Directory: {req_body[2]}")
+    print(f"Author: {req_body[3]}")
+    print(f"Client-start: {req_body[4]}")
 
     Type = "Acknowledge \r\n"
     Status = "Acknowledged \r\n"
@@ -75,7 +77,8 @@ def recv_ack_header(c: socket) -> Sequence[str]:
     print()
     n_packets = req_body[1]
     author = req_body[2]
-    return (n_packets, author)
+    cwd = req_body[3]
+    return (n_packets, author, cwd)
 
 
 def recv_content(c: socket, author: str) -> None:
@@ -162,6 +165,7 @@ def handle_conn(client: socket) -> None:
     details = recv_ack_header(client)
     n_packets = int(details[0])
     author = str(details[1])
+    cwd = details[2]
 
     packet_sync = 0
     while packet_sync < n_packets:

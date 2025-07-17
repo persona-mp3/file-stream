@@ -1,3 +1,5 @@
+import sys
+import os
 import socket 
 import struct 
 from utils.utils import file_handler, create_client
@@ -26,11 +28,12 @@ def send_ack(s: socket, n: int, codec_author: bytes) -> bool:
     N_PACKETS = str(n) + " \r\n"
     Author = codec_author + " \r\n".encode(FORMAT)
     Start = "0".encode(FORMAT)
+    CWD = (os.path.basename(os.getcwd()) + " \r\n").encode(FORMAT)
 
     ack_header = Type.encode(FORMAT)
     encoded_n_packets = N_PACKETS.encode(FORMAT)
 
-    body = ack_header + encoded_n_packets + Author + Start
+    body = ack_header + encoded_n_packets + CWD + Author + Start 
     header = struct.pack("!I", len(body))
 
     ack_req = header + body
@@ -113,5 +116,25 @@ def streamer(fname: str) -> None:
     s.close()
     print("Connection closed")
 
-# create_data_packet()
-# stream_file("BinarySearch.java")
+
+def main_fn() -> None:
+    """This is used to read command line arguments for files to stream"""
+    args = sys.argv 
+    if len(args) < 2:
+        print("fatal: not enough arguments passed in")
+        exit()
+
+    files = args[1:]
+    print("streaming the following files", "".join(files))
+
+    for file in files:
+        if os.path.exists(file):
+            streamer(file)
+        else:
+            print(f"fatal: this file does not exist, {file}")
+            continue
+
+    return
+
+
+main_fn()
