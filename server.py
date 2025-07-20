@@ -3,6 +3,7 @@ import os
 import select 
 import struct
 from utils.utils import file_handler
+from encoders.pack_response import send_packet_status, error_response
 
 
 # The content-length for every request/response will be designated 4bytes for every packet
@@ -120,7 +121,7 @@ def recv_ack_header(client: socket) -> set:
     return (n_packets, cwd, author)
 
 
-def decode_packet(client: socket, cwd: str, author: str) -> None:
+def decode_packet(client: socket, cwd: str, author: str) -> int:
     """
     This is the main decoding logic for Data-Packets. Here is the packet structure:
 
@@ -181,11 +182,17 @@ def decode_packet(client: socket, cwd: str, author: str) -> None:
     print(f"Extracted-Data: {data}")
     print(f"Current-Working-Dir, CWD: {cwd}")
 
-    print("we'd want to perform some file operations here")
+    print("transferring data ")
 
-    # f = file_handler((cwd + "/" + author), "a")
-    # f.write(data)
-    # print("finish writing to data")
+    try:
+        f = file_handler((cwd + "/" + author), "a")
+        f.write(data)
+        print("finish writing data")
+    except Exception as e:
+        client.send(error_response(e))
+        return -1
+
+    return int(tag)
 
 
 def handle_conn(client: socket) -> None:
@@ -194,23 +201,31 @@ def handle_conn(client: socket) -> None:
         print("Client has already been closed, due to invalid Ack-Request")
         return
 
-    n_packets = details[0]
+    n_packets = int(details[0])
     cwd = details[1]
     author = details[2]
 
     print(f"Creating client's cwd, {cwd},  on local-machine")
 
     try:
-        os.mkdir(cwd, 0o777)
+        os.makedirs(cwd, exist_ok=True)
     except Exception as e:
         print(f"An error occured in making cwd: {e}")
-        exit()
+        client.send(error_response(e))
+        return
 
     print("cwd made successfully, reading packets now...")
 
     packet_sync = 0
+    recvd = 1
     while packet_sync < int(n_packets):
-        decode_packet(client, cwd, author)
+        tag = decode_packet(client, cwd, author)
+        response = send_packet_status(tag, recvd)
+        recvd += 1
+        print("\n -- sending success response --- \n")
+        print(response)
+
+        client.sendall(response)
         packet_sync += 1
 
 

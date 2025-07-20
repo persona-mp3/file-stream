@@ -15,7 +15,6 @@ def create_client(ADDR: Union[str, int]) -> socket:
         return s
     except Exception as e:
         print(f"An error occured in creating client socket:\n{e}")
-        exit()
 
 
 def file_handler(file_name: str, flag: str = "r") -> IO:
@@ -28,4 +27,3 @@ def file_handler(file_name: str, flag: str = "r") -> IO:
         return file
     except Exception as e:
         print(f"An error occured in file opeation:\n{e}")
-        exit()

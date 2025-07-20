@@ -1,14 +1,18 @@
 import struct 
 import socket
+import time
 import os
 import sys
 from utils.utils import file_handler, create_client
+from encoders.pack_response import verify_packet_status
 
 FORMAT = "utf-8"
 
 HOST = "127.0.0.1"
 PORT = 6000
 ADDR = (HOST, PORT)
+
+HEADER = 4
 
 ACK_REQ = "Acknowledge \r\n"
 PANIC_REQ = "Panic \r\n"
@@ -123,11 +127,27 @@ def streamer(file_name: str) -> None:
         enc_tag_len = struct.pack("!I", len(tag))
         enc_sent_len = struct.pack("!I", len(sent))
 
+        time.sleep(2)
+
         payload = req_len + req_type + enc_sent_len + sent + enc_tag_len + tag + chunks[packet_sync]
         header = struct.pack("!I", len(payload))
 
         packet = header + payload
         s.sendall(packet)
+
+        print("\n == waiting on packet status from encoder.verify_packet_status() == \n")
+
+        # TODO: Explicit packet reading
+        server_response = s.recv(1024)
+        ok = verify_packet_status(server_response)
+        if not ok:
+            print("ERRORRRRR")
+            print(server_response[4:])
+            print("resend this packet then")
+            continue
+
+        print(f"server response: \n {server_response[4:]}")
+        print("packet-sync:", packet_sync)
 
         packet_sync += 1
 
