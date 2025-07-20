@@ -69,6 +69,21 @@ def test_ack_res():
 
 
 def streamer(file_name: str) -> None:
+    """
+    Takes a file, uses utils functions from the Utils module, and creates packets from the file and streams over to 
+    the TCP Server. This protocol is byte-based, so alot of encoding and offsetting will be done on the server-side, it's 
+    important to be careful here. 
+
+    body = req_len + req_type + enc_sent_len + sent + enc_tag_len + tag + data
+    packet = len(body) + body
+
+    Content-Length/ Header = 4bytes, BigEndian
+    Encoded-Sent-Length, Sent, Encoded-Tag-Length, Tag = 4bytes, BigEndian
+
+    The Sent and Tag fields are used to communicate to the server, how many packets have been sent to the them, 
+    the client needs to confirm this in before sending Packet-Status Response. Anything aside 200 will stop the normal flow.
+
+    """
     s = create_client(ADDR)
     req_type = DATA_PACKET
     req_len = struct.pack("B", len(req_type))

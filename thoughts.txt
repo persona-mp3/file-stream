@@ -1,0 +1,25 @@
+WELL, the progress made so far is really interesting, after a couple weeks, reading TCP Documentations, learning socket programming and how UNIX && Python handles it,
+I've been able to create one similiar to the one I wanted and successfully shot myself in the foot. 
+The main problem with the previous one is with the Client Architecture. I did not put into consideration about how it will tell send multiple files in a session 
+instead of each file is it's own client, and also integrating it with Go.
+
+While this clearly calls for a rewrite, or even a throwaway of the first one, the issue is grandiose, easy to solve, quite complex to tell the computer what to do.
+Handling the protocol of something like this will be a journey, but won't kill us, so here are the things I think should be focused on, during this new version.
+We'll just call it version 1.0
+
+1. We need to make request headers for verification of each packet operation. For example if the packet with a tag of 12, we found out something went wrong, 
+   We inform the client, and they send it again, depending on what the situation might be. And also communicate for every request, there must be a response.
+
+2. We also need to get more familiar with Python's OS-Module on IO operations, as it seems things here are really as straight forward as the language.;
+
+3. We also need to make sure that the CLIENT can send multiple files at once, instead of making each file a seperate client on the server. We should also include multithreading 
+   on both client and server to handle concurrency as file IO in python are blocking, so are all socket operations.
+
+=========================================
+      REQUEST-RESPONSE
+=========================================
+So starting with the Client, we need to make sure that 
+1. We dont send any other packet unless we've recieved reponse from the server that the last packet was successful. 
+   To make it easy, we can make it text-based, instead of bytes, to avoid much decoding as no data is sent, similar to the ACK-STAGE
+
+

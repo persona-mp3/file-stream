@@ -2,6 +2,7 @@ import socket
 import os
 import select 
 import struct
+from utils.utils import file_handler
 
 
 # The content-length for every request/response will be designated 4bytes for every packet
@@ -181,6 +182,10 @@ def decode_packet(client: socket, cwd: str, author: str) -> None:
     print(f"Current-Working-Dir, CWD: {cwd}")
 
     print("we'd want to perform some file operations here")
+
+    # f = file_handler((cwd + "/" + author), "a")
+    # f.write(data)
+    # print("finish writing to data")
 
 
 def handle_conn(client: socket) -> None:
