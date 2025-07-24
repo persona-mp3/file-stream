@@ -23,3 +23,13 @@ So starting with the Client, we need to make sure that
    To make it easy, we can make it text-based, instead of bytes, to avoid much decoding as no data is sent, similar to the ACK-STAGE
 
 
+"""
+We need to include versioning inside this new protocol, so new req-response will be like this: 
+    Content-Length: 128
+    Version: 001
+    Request-Type: Packet
+    Sent: 12
+    Tag: 12
+    Author: file_name
+    Data: "New Protocl Version"
+"""

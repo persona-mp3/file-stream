@@ -121,8 +121,8 @@ def streamer(file_name: str) -> None:
     print("\n === preparing packets to send === \n")
 
     while packet_sync < N_PACKETS:
-        tag = str(packet_sync).encode(FORMAT)
-        sent = str(packet_sync).encode(FORMAT)
+        tag = str((packet_sync + 1)).encode(FORMAT)
+        sent = str((packet_sync + 1)).encode(FORMAT)
 
         enc_tag_len = struct.pack("!I", len(tag))
         enc_sent_len = struct.pack("!I", len(sent))

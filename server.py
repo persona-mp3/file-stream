@@ -179,7 +179,7 @@ def decode_packet(client: socket, cwd: str, author: str) -> int:
 
     data = payload[offset:].decode(FORMAT)
 
-    print(f"Extracted-Data: {data}")
+    # print(f"Extracted-Data: {data}")
     print(f"Current-Working-Dir, CWD: {cwd}")
 
     print("transferring data ")
@@ -217,15 +217,23 @@ def handle_conn(client: socket) -> None:
     print("cwd made successfully, reading packets now...")
 
     packet_sync = 0
+    # This is to tell the client how many packets we have received all together.
+    # You can decode this on the client to see it.
     recvd = 1
     while packet_sync < int(n_packets):
         tag = decode_packet(client, cwd, author)
+        if tag == n_packets:
+            print("We should end the connection to the client, now", tag, n_packets)
+            print("Tell the client we are about to end the connection before closing")
+            client.close()
+
         response = send_packet_status(tag, recvd)
         recvd += 1
         print("\n -- sending success response --- \n")
         print(response)
 
         client.sendall(response)
+        print("server-sync -> (packet_sync, recvd, tag)", (packet_sync, recvd, tag))
         packet_sync += 1
 
 
