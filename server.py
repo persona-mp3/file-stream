@@ -4,6 +4,7 @@ from pathlib import Path
 import select 
 import struct
 from utils import utils as utils
+from utils.utils import file_handler
 from encoders.pack_response import send_packet_status, error_response
 
 
@@ -191,8 +192,6 @@ def decode_packet(client: socket, cwd: str, author: str) -> int:
     offset += tag_len
 
     data = payload[offset:].decode(FORMAT)
-    print(data)
-    print("\n\n\n")
 
     # print(f"Extracted-Data: {data}")
     print(f"Current-Working-Dir, CWD: {cwd}")

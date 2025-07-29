@@ -1,5 +1,6 @@
 import struct 
 import socket
+import time
 import os
 import sys
 from utils.utils import file_handler, create_client
@@ -133,10 +134,11 @@ def streamer(file_name: str) -> None:
         enc_tag_len = struct.pack("!I", len(tag))
         enc_sent_len = struct.pack("!I", len(sent))
 
-        # time.sleep(2)
 
         payload = req_len + req_type + enc_sent_len + sent + enc_tag_len + tag + chunks[packet_sync]
         print(f"Current Chunk to send: \n {chunks[packet_sync].decode(FORMAT)} \n\n\n\n")
+
+        payload = req_len + req_type + enc_sent_len + sent + enc_tag_len + tag + chunks[packet_sync]
         header = struct.pack("!I", len(payload))
 
         packet = header + payload
@@ -188,7 +190,7 @@ def main() -> None:
         for file in files:
             print("Streaming: ", file)
             streamer(file)
-    elif sys.argv[1] != "." and len(sys.argv) > 2:
+    elif sys.argv[1] != "." and len(sys.argv) > 1:
         print("Streaming single files...")
         # time.sleep(1.1)
 

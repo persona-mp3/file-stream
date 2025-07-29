@@ -33,6 +33,7 @@ We need to include versioning inside this new protocol, so new req-response will
     Author: file_name
     Data: "New Protocl Version"
 """
+<<<<<<< HEAD
 
 13:07 July 21st
 2. Second Problem is this, for every packet that the client sends, we are opening that same file again, which I assume, can cause
@@ -86,3 +87,5 @@ network ports open for 3users, and it's really a bad idea to send remote executi
   - To avoid overloading server, we can make a queue for the files, we can stream 8 at once, and then so on.
   - Also I don't know if I should allow other file formats like png, jpg and others, as the server just goes offline if it expects something else
 
+=======
+>>>>>>> fc6616efff0b177dd66445a5604ece14959e41cd
