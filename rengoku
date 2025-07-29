@@ -1,0 +1,35 @@
+========================================================================================================
+                  STEP 1: CLIENT-SERVER STRUCTURE
+========================================================================================================
+So if I want to actually make the protocol for yogit using socket programming, this is how I think
+we can do go about it. We can set up the structure like this such that depending on the user they can 
+all connect to a central server over TCP instead of HTTP. I dont think if we need SSH.
+The server will be configured on over AMAZON AWS EC2 Instance. The server will be built using python. 
+And depending again, this is going to be more painful dealing with Windows-based systems, we might need to 
+use Golang, just so I can get back in touch with the language. And some bash scripting might be involved.
+
+So here is a rough draft of the tech stack?? ->
+  1. Python
+  2. Golang
+  3. Bash 
+  4. MongoDB
+  5. JavaScript for UI Configuration, <probably>
+
+
+========================================================================================================
+                  STEP 2: DATA TRANSMISSION, TCP
+========================================================================================================
+So due to numerous trials and errors, I've been able to understand the basic implmentation of a TCP
+streaming over Python with files. This is how I think the Packet should be structed as :
+
+                      ----------------------------------------------------
+                          content_len + file_name + content
+                      ----------------------------------------------------
+
+The content_len can still remain at 4 bytes, but more research will need to be done on making protocols 
+but more complex slicing will need to be done as Python does not really interface well with it or maybe 
+it's just my skill issues and lack of familiarity with the language, but yeah.
+
+This is the main server that will handle all the data manipulation and reading. 
+This server will be named RENGOKU. The proxy server will be used for auth purposed and grant connection 
+between the server and the client allowing for further data transmission.

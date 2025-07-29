@@ -286,5 +286,4 @@ def handle_conn(client: socket) -> None:
         print("server-sync -> (packet_sync, recvd, tag)", (packet_sync, recvd, tag))
         packet_sync += 1
 
-
 create_server(6000)

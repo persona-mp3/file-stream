@@ -1,0 +1,71 @@
+This here just contains some specific code I can rollback to just incase I break somethings or just for reference sake
+
+
+===========================================================================================================
+          REASON
+          Well in the code below, It basically streams the file to the server, line by line, but it served its purpose
+          while it was useful, but now, im now streaming it in bytes, preferrably 1024 bytes per chunk now, 
+===========================================================================================================
+
+===============================
+          BEFORE:
+===============================
+    file = file_handler(fname, "rb")
+     file_content = [line.rstrip() for line in file.readlines()]
+     N_PACKETS = len(file_content)
+
+    packet_sync = 0 
+    while packet_sync < N_PACKETS:
+      tag = str(packet_sync).encode(FORMAT)
+      sent = str(packet_sync).encode(FORMAT)
+ 
+      enc_tag_len = struct.pack("!I", len(tag))
+      enc_sent_len = struct.pack("!I", len(sent))
+ 
+      body = req_len + req_type + enc_sent_len + sent + enc_tag_len + tag + file_content[packet_sync].encode(FORMAT)
+      header = struct.pack("!I", len(body))
+ 
+      packet = header + body
+ 
+      decode_packet(packet)
+      # print(f"packets-sent: {sent}")
+ 
+      packet_sync += 1
+
+
+===============================
+          AFTER:
+===============================
+    file = file_handler(fname, "rb")
+    packet_sync = 0 
+
+    CHUNK_SIZE = 1024
+    chunks = []
+    while True:
+        chunk = file.read(CHUNK_SIZE)
+        if not chunk:
+            print("no more content to read from file, closing file")
+            file.close()
+            break
+        chunks.append(chunk)
+
+    N_PACKETS = len(chunks)
+    print("total packets to send:", N_PACKETS)
+
+    while packet_sync < N_PACKETS:
+        tag = str(packet_sync).encode(FORMAT)
+        sent = str(packet_sync).encode(FORMAT)
+
+        enc_tag_len = struct.pack("!I", len(tag))
+        enc_sent_len = struct.pack("!I", len(sent))
+
+        body = req_len + req_type + enc_sent_len + sent + enc_tag_len + tag + chunks[packet_sync]
+        header = struct.pack("!I", len(body))
+
+        packet = header + body
+
+        decode_packet(packet)
+        # print(f"packets-sent: {sent}")
+
+        packet_sync += 1
+

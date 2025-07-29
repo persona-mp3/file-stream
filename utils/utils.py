@@ -4,12 +4,7 @@ import re
 import socket 
 from typing import Union, IO
 
-
-def create_client(ADDR: Union[str, int]) -> socket:
-    """
-    Creates a client socket and connects to ADDR, a tuple of (IP_ADDR, PORT)
-    Raises an exception and exits if any error occurs, and returns connected socket if successful
-    """
+def create_client(ADDR: tuple) -> socket:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -107,3 +102,12 @@ def get_all_files() -> list[str]:
 
     print("Files ready...")
     return ready_files
+
+
+def file_handler(fname: str, flag="r") -> IO:
+    try:
+        f = open(fname, flag)
+        return f
+    except Exception as e:
+        print(f"An error occured in file_handler\n{e}")
+        exit()
