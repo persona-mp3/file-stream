@@ -1,0 +1,13 @@
+I'm thinking of incorprating a design pattern into the refactored version. Although procedural and modularisation is good, 
+something better can be done to improve it. But if there's something I'll take from this project, is learning how to comment/document:
+
+- All function definitions must have the following hints:
+ - Function Signature 
+ - Calls and Callers, including stdlibs 
+ - Purpose and explanation
+
+Well, there are also someother stuff we need to implement too:
+- Packet Retrial 
+- Structued Logging 
+- End Message 
+- Conccurency on server to accpet multiple clients
