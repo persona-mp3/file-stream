@@ -3,8 +3,13 @@ import struct
 import os 
 import select 
 import threading 
+
 from typing import NamedTuple
 from pathlib import Path 
+
+from response import responses as res
+
+from protocol import decode as dec
 
 # number of bytes to read for content-length
 HEADER = 4
@@ -12,10 +17,10 @@ VERSION = "001"
 
 # decoding and encoding format for binary protocol 
 FORMAT = "utf-8"
-
 ACK_REQ = "Acknowledge"
 ACK_S = "200"
 ACK_F = "400"
+ACK_ER = "500"
 
 PACKET_REQ = "Packet"
 PACKET_RES = "Packet-Status"
@@ -127,17 +132,114 @@ def ack_client(client: socket.socket) -> AckInfo:
         client.close()
         return
 
+    n_packets = int(payload[2])
+    cwd = payload[3]
+    author = payload[4]
+
     # ===== Sending Ack-Reponse back to Client ===== #
     print(f"[valid-request] -> sending status of {ACK_S}")
     response: bytes = ENC_VERSION + ENC_ACK_REQ + ENC_ACK_S
     client.sendall(response)
 
-    return AckInfo(20, "Reafactor", "Please-Work")
+    return AckInfo(n_packets, cwd, author)
+
+
+class PacketInfo:
+    """
+    Holds Version, Request-Type, Sent, Tag, and data all in string
+    """
+    version: str
+    req_type: str
+    sent: str
+    tag: str
+    data: str
+
+
+def recv_data(client: socket.socket) -> PacketInfo:
+    """
+    Reads first 4-bytes of a packet sent by the client. Validation against the version and 
+    request type will be done to help against malformed data-packets.
+
+    Calls:
+        dec.decode_packet() -> PacketInfo
+
+    Callers:
+        handle_conn()
+
+    """
+
+    print("\n --- reading header/content_len --- \n")
+    content_len = b''
+    while len(content_len) < HEADER:
+        chunk = client.recv(HEADER - content_len)
+        content_len += chunk
+
+    # TODO: create an invalid packet response against malformed packets in requests module 
+    if len(content_len) < 4:
+        print("[malformed-header] -> error in decoding malformed header packet, ", len(content_len))
+        return
+
+    content_len: int = struct.unpack("!I", content_len)[0]
+
+    print("\n --- reading payload --- \n")
+    payload = b''
+    while len(payload) < content_len:
+        chunk = client.recv(content_len - len(payload))
+        payload += chunk
+
+    packet_data: PacketInfo = dec.decode_packet(payload)
+
+    # The dataclass is a NamedTuple to avoid mutability
+    version = packet_data[0]
+    req_type = packet_data[1]
+    sent_packets = packet_data[2]
+    packet_tag = packet_data[3]
+    data = packet_data[4]
+
+    if (version != VERSION or req_type != PACKET_REQ):
+        print("[malformed-packet] -> sending error response to client")
+        return
+
+    print("Data sent")
+    print(data)
+
+    return int(packet_tag)
 
 
 def handle_conn(client: socket.socket) -> None:
+    """
+    Main Protocol logic is embeeded here, managing Packet-handling and request 
+    Calls:
+        - ack_client() -> AckInfo
+
+    Callers:
+        - create_server()
+    """
     print("handling client...")
-    ack_client(client)
+
+    n_packets, CWD, author = ack_client(client)
+
+    try:
+        os.makedirs(CWD, mode=0o777, exist_ok=True)
+    except Exception as e:
+        print("An error occured in making CWD", repr(e))
+        print("\n --- sending error response --- \n")
+        client.sendall(res.error_response())
+        client.close()
+
+    print("[initialised] -> cwd")
+    print(f"[n_packets] -> {n_packets}")
+    print(f"[author] -> {author}")
+
+    sync = 0 
+    recvd = 1 
+
+    while sync < n_packets:
+        print("We are going to count the number of packets we have recvd from client")
+        print("And also decode each packet here and send ACK-Packet-Responses for each")
+
+        recvd += 1
+        sync += 1
 
 
 def main() -> None:
