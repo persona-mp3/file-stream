@@ -182,14 +182,15 @@ def recv_data(client: socket.socket, CWD: str, author: str) -> int:
         content_len += chunk
 
     # TODO: create an invalid packet response against malformed packets in requests module 
-    if len(content_len) < 4:
+    if len(content_len) != 4:
         print("[malformed-header] -> error in decoding malformed header packet, ", len(content_len))
         return
 
     content_len: int = struct.unpack("!I", content_len)[0]
 
     print("\n --- reading payload --- \n")
-    payload = b''
+    # we then use the content-len to read all the amounts of bytes to get the full packet and call decode_packet()
+    payload: bytes = b''
     while len(payload) < content_len:
         chunk = client.recv(content_len - len(payload))
         payload += chunk
@@ -216,7 +217,7 @@ def recv_data(client: socket.socket, CWD: str, author: str) -> int:
     print("Data recvd")
     print(data)
 
-    # full_path = None
+    # file operations will begin here
 
     return int(packet_tag)
 
@@ -230,7 +231,7 @@ def handle_conn(client: socket.socket) -> None:
         - recv_data() -> PacketInfo
 
     Callers:
-        - create_server()
+        - create_server() -> None
     """
     print("handling client...")
 

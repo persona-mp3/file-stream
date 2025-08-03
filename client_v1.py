@@ -81,9 +81,10 @@ def get_acked(s: socket.socket, n_packets: int, file_name: str) -> bool:
     CWD: bytes = (str(Path.cwd().name) + " \r\n").encode(FORMAT)
     print(f"cwd of client -> {CWD}")
 
-    payload = ENC_VERSION + ENC_ACK_REQ + expected_packets + CWD + author
-    header = struct.pack("!I", len(payload))
-    ack_request = header + payload
+    payload: bytes = ENC_VERSION + ENC_ACK_REQ + expected_packets + CWD + author
+    header: bytes = struct.pack("!I", len(payload))
+    ack_request: bytes = header + payload
+
     s.sendall(ack_request)
 
     # ---- to decode the Ack-Request, a predefined length will be used to avoid unescessary overhead ---
@@ -121,7 +122,10 @@ def read_file(file_name: str) -> list[bytes]:
         os
 
     Callers:
-        streamer()
+        streamer() 
+
+    Returns:
+        List of data in bytes
     """
     try:
         # we want to read the file contents 1024bytes at a time
@@ -141,7 +145,6 @@ def read_file(file_name: str) -> list[bytes]:
 
     except Exception as e:
         print("An unexpected error occured\n ", repr(e))
-        return
 
 
 def streamer(file_name: str) -> None: 
@@ -171,7 +174,7 @@ def streamer(file_name: str) -> None:
         s.sendall(enc_packet)
 
         # === Waiting on Packet-Status Response ===
-        time.sleep(2)
+        time.sleep(0.3)
         print("...waiting on packet-status")
         sync += 1
         sent += 1
