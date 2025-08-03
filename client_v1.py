@@ -1,10 +1,12 @@
 import socket 
 import struct
-import os 
-import select 
-import threading 
-from typing import NamedTuple
+import sys
+import os
+import time
+
 from pathlib import Path 
+from utils import utils as utils
+from protocol import encode as enc
 
 # number of bytes to read for content-length
 HEADER = 4
@@ -60,6 +62,17 @@ def create_client() -> socket.socket:
 
 
 def get_acked(s: socket.socket, n_packets: int, file_name: str) -> bool:
+    """
+    Handles structuring of Ack-Request for each file sent to the server. 
+    It also handles sending the CWD, but the Caller has to provide the 
+    file_name and expected number of packets, n_packets.
+
+    Callers:
+        streamer() -> None
+
+    Returns:
+        - True if server Acknowledged our Request with code of 200, False otherwise
+    """
     is_acked = True 
 
     expected_packets: bytes = (str(n_packets) + " \r\n").encode(FORMAT)
@@ -99,21 +112,108 @@ def get_acked(s: socket.socket, n_packets: int, file_name: str) -> bool:
     return payload[2] == ACK_S
 
 
-def main() -> None: 
+def read_file(file_name: str) -> list[bytes]:
+    """
+    Takes in a file_name, and reads it's content into a list.
+    All filenames passed in must be verfied that they exist first
+
+    Calls:
+        os
+
+    Callers:
+        streamer()
+    """
+    try:
+        # we want to read the file contents 1024bytes at a time
+        CHUNK = 1024
+        content: list[bytes] = []
+
+        print(f"[reading] -> {file_name}")
+        with open(file_name, "rb") as f:
+            while True:
+                chunk: bytes = f.read(CHUNK)
+                if not chunk:
+                    print("EOF reached")
+                    break
+                content.append(chunk)
+
+        return content
+
+    except Exception as e:
+        print("An unexpected error occured\n ", repr(e))
+        return
+
+
+def streamer(file_name: str) -> None: 
     """
     Calls:
         create_client() -> socket.socket
         get_acked() -> bool
 
     Callers:
-        - None
+        - main()
     """
     s: socket.socket = create_client()
-    is_acked = get_acked(s, 20, "Swing Lynn: Slowed Version")
+
+    file_content: list[bytes] = read_file(file_name)
+    N_PACKETS = len(file_content)
+
+    is_acked: bool = get_acked(s, N_PACKETS, file_name)
     if not is_acked:
         return
 
-    print("Continue")
+    print("\n--- begining protocol ---\n")
+
+    sync = 0 
+    sent = 1
+    while sync < N_PACKETS:
+        enc_packet: bytes = enc.encode_packet(file_content[sync], sent, sent)  # The tag of each packet can match the number of packets sent
+        s.sendall(enc_packet)
+
+        # === Waiting on Packet-Status Response ===
+        time.sleep(2)
+        print("...waiting on packet-status")
+        sync += 1
+        sent += 1
+
+
+def main() -> None:
+    """
+    Read file arguments passed in command-line
+
+    Calls:
+        os
+        sys.argv -> list[str]
+        utils.get_all_files() -> list[str]
+
+    Callers:
+        None
+
+    Returns:
+        None
+    """
+    if len(sys.argv) < 2:
+        print("fatal: No file arguments passed in.")
+        return
+
+    if sys.argv[1] == ".":
+        print("Sending whole directory to server...")
+        # recursively gets all file paths and their sub-folders in CWD
+        all_files: list[str] = utils.get_all_files()
+        for file in all_files:
+            streamer(file)
+
+    elif sys.argv[1] != "." and len(sys.argv) > 1:
+        for file in sys.argv[1:]:
+            if os.path.exists(file):
+                streamer(file)
+            else:
+                # tell server to abort the mission
+                print(f"fatal: {file} does not exist, aborting proccess")
+                exit()
+    else:
+        print("fatal: Invalid arguments passed in \n \n ren . -> Sends all files in CWD \n\n ren f1 f2 ... -> sends f1 and f2 \n\n")
+        exit()
 
 
 main()

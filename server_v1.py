@@ -8,8 +8,8 @@ from typing import NamedTuple
 from pathlib import Path 
 
 from response import responses as res
-
 from protocol import decode as dec
+from utils import utils as utils
 
 # number of bytes to read for content-length
 HEADER = 4
@@ -155,23 +155,30 @@ class PacketInfo:
     data: str
 
 
-def recv_data(client: socket.socket) -> PacketInfo:
+def recv_data(client: socket.socket, CWD: str, author: str) -> int:
     """
     Reads first 4-bytes of a packet sent by the client. Validation against the version and 
     request type will be done to help against malformed data-packets.
 
+    It writes the decoded data to the author/file_name
+
     Calls:
+        utils.find_parent()
+        utils.create_nested()
         dec.decode_packet() -> PacketInfo
 
     Callers:
         handle_conn()
+
+    Returns:
+        - Tag of the packet
 
     """
 
     print("\n --- reading header/content_len --- \n")
     content_len = b''
     while len(content_len) < HEADER:
-        chunk = client.recv(HEADER - content_len)
+        chunk = client.recv(HEADER - len(content_len))
         content_len += chunk
 
     # TODO: create an invalid packet response against malformed packets in requests module 
@@ -198,10 +205,18 @@ def recv_data(client: socket.socket) -> PacketInfo:
 
     if (version != VERSION or req_type != PACKET_REQ):
         print("[malformed-packet] -> sending error response to client")
+        print(version, req_type)
         return
 
-    print("Data sent")
+    print(f"Raw-Packet: {payload}")
+    print(f"Version: {version}")
+    print(f"Packets-Sent: {sent_packets}")
+    print(f"Request-Type: {req_type}")
+    print(f"Packet-Tag: {packet_tag}")
+    print("Data recvd")
     print(data)
+
+    # full_path = None
 
     return int(packet_tag)
 
@@ -209,8 +224,10 @@ def recv_data(client: socket.socket) -> PacketInfo:
 def handle_conn(client: socket.socket) -> None:
     """
     Main Protocol logic is embeeded here, managing Packet-handling and request 
+
     Calls:
         - ack_client() -> AckInfo
+        - recv_data() -> PacketInfo
 
     Callers:
         - create_server()
@@ -235,9 +252,11 @@ def handle_conn(client: socket.socket) -> None:
     recvd = 1 
 
     while sync < n_packets:
-        print("We are going to count the number of packets we have recvd from client")
-        print("And also decode each packet here and send ACK-Packet-Responses for each")
+        packet_tag: int = recv_data(client, CWD, author)
+        if packet_tag == n_packets:
+            print("Quit all socket operations on client as client will immediately close")
 
+        # we'd want to send a packet-status response too from res.packet_stats(tag, recvd)
         recvd += 1
         sync += 1
 

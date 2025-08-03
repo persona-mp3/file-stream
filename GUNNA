@@ -1,0 +1,118 @@
+[server created at], ('0.0.0.0', 6000), listening for connections
+[new client] -> ('127.0.0.1', 47922) 
+
+
+handling client...
+Content-length for ack-request -> 54
+
+
+ --- decoding Ack-Request --- 
+
+
+[ack-request] ->  ['Acknowledge', '7', 'tcp-stream', 'progresslogs.txt', '0']
+Invalid Ack-Request, sending status of b'400 \r\n', and closing connection
+Acknowledge 7 5
+[server created at], ('0.0.0.0', 6000), listening for connections
+[new client] -> ('127.0.0.1', 42104) 
+
+
+handling client...
+Content-length for ack-request -> 56
+
+
+ --- decoding Ack-Request --- 
+
+
+[ack-request] ->  ['001', 'Acknowledge', '7', 'tcp-stream', 'progresslogs.txt']
+[valid-request] -> sending status of 200
+[initialised] -> cwd
+[n_packets] -> 7
+[author] -> progresslogs.txt
+
+ --- reading header/content_len --- 
+
+
+ --- reading payload --- 
+
+Raw-Packet: b"\x03001\x06Packet\x00\x00\x00\x011\x00\x00\x00\x011WELL, the progress made so far is really interesting, after a couple weeks, reading TCP Documentations, learning socket programming and how UNIX && Python handles it,\nI've been able to create one similiar to the one I wanted and successfully shot myself in the foot. \nThe main problem with the previous one is with the Client Architecture. I did not put into consideration about how it will tell send multiple files in a session \ninstead of each file is it's own client, and also integrating it with Go.\n\nWhile this clearly calls for a rewrite, or even a throwaway of the first one, the issue is grandiose, easy to solve, quite complex to tell the computer what to do.\nHandling the protocol of something like this will be a journey, but won't kill us, so here are the things I think should be focused on, during this new version.\nWe'll just call it version 1.0\n\n1. We need to make request headers for verification of each packet operation. For example if the packet with a tag of 12, we found out something went wrong, \n   W"
+Version: 001
+Packets-Sent: 1
+Request-Type: Packet
+Data recvd
+WELL, the progress made so far is really interesting, after a couple weeks, reading TCP Documentations, learning socket programming and how UNIX && Python handles it,
+I've been able to create one similiar to the one I wanted and successfully shot myself in the foot. 
+The main problem with the previous one is with the Client Architecture. I did not put into consideration about how it will tell send multiple files in a session 
+instead of each file is it's own client, and also integrating it with Go.
+
+While this clearly calls for a rewrite, or even a throwaway of the first one, the issue is grandiose, easy to solve, quite complex to tell the computer what to do.
+Handling the protocol of something like this will be a journey, but won't kill us, so here are the things I think should be focused on, during this new version.
+We'll just call it version 1.0
+
+1. We need to make request headers for verification of each packet operation. For example if the packet with a tag of 12, we found out something went wrong, 
+   W
+
+ --- reading header/content_len --- 
+
+
+ --- reading payload --- 
+
+Raw-Packet: b'\x03001\x06Packet\x00\x00\x00\x012\x00\x00\x00\x012e inform the client, and they send it again, depending on what the situation might be. And also communicate for every request, there must be a response.\n\n2. We also need to get more familiar with Python\'s OS-Module on IO operations, as it seems things here are really as straight forward as the language.;\n\n3. We also need to make sure that the CLIENT can send multiple files at once, instead of making each file a seperate client on the server. We should also include multithreading \n   on both client and server to handle concurrency as file IO in python are blocking, so are all socket operations.\n\n=========================================\n      REQUEST-RESPONSE\n=========================================\nSo starting with the Client, we need to make sure that \n1. We dont send any other packet unless we\'ve recieved reponse from the server that the last packet was successful. \n   To make it easy, we can make it text-based, instead of bytes, to avoid much decoding as no data is sent, similar to the ACK-STAGE\n\n\n"""\nWe '
+Version: 001
+Packets-Sent: 2
+Request-Type: Packet
+Data recvd
+e inform the client, and they send it again, depending on what the situation might be. And also communicate for every request, there must be a response.
+
+2. We also need to get more familiar with Python's OS-Module on IO operations, as it seems things here are really as straight forward as the language.;
+
+3. We also need to make sure that the CLIENT can send multiple files at once, instead of making each file a seperate client on the server. We should also include multithreading 
+   on both client and server to handle concurrency as file IO in python are blocking, so are all socket operations.
+
+=========================================
+      REQUEST-RESPONSE
+=========================================
+So starting with the Client, we need to make sure that 
+1. We dont send any other packet unless we've recieved reponse from the server that the last packet was successful. 
+   To make it easy, we can make it text-based, instead of bytes, to avoid much decoding as no data is sent, similar to the ACK-STAGE
+
+
+"""
+We 
+
+ --- reading header/content_len --- 
+
+
+ --- reading payload --- 
+
+Raw-Packet: b'\x03001\x06Packet\x00\x00\x00\x013\x00\x00\x00\x013need to include versioning inside this new protocol, so new req-response will be like this: \n    Content-Length: 128\n    Version: 001\n    Request-Type: Packet\n    Sent: 12\n    Tag: 12\n    Author: file_name\n    Data: "New Protocl Version"\n"""\n<<<<<<< HEAD\n\n13:07 July 21st\n2. Second Problem is this, for every packet that the client sends, we are opening that same file again, which I assume, can cause\n   a huge amount of overhead, and also, theres no indication telling the server on the client, \n   "Hey Server, I\'m done, I want to close the connection"\n   And the file we keep opening, does not even close.\n   So if we can use a threadpool?? Such that for each file that is being sent by the client, we can assign a seperate thread to it \n   that always has its own particular file open, and when the Client wants to close or is done with the file, we can just close the file then. \n   We also need to incorporate flags into the protocol, if this file we are sending is in a sub-directory and include it in. \n   We should'
+Version: 001
+Packets-Sent: 3
+Request-Type: Packet
+Data recvd
+need to include versioning inside this new protocol, so new req-response will be like this: 
+    Content-Length: 128
+    Version: 001
+    Request-Type: Packet
+    Sent: 12
+    Tag: 12
+    Author: file_name
+    Data: "New Protocl Version"
+"""
+<<<<<<< HEAD
+
+13:07 July 21st
+2. Second Problem is this, for every packet that the client sends, we are opening that same file again, which I assume, can cause
+   a huge amount of overhead, and also, theres no indication telling the server on the client, 
+   "Hey Server, I'm done, I want to close the connection"
+   And the file we keep opening, does not even close.
+   So if we can use a threadpool?? Such that for each file that is being sent by the client, we can assign a seperate thread to it 
+   that always has its own particular file open, and when the Client wants to close or is done with the file, we can just close the file then. 
+   We also need to incorporate flags into the protocol, if this file we are sending is in a sub-directory and include it in. 
+   We should
+
+ --- reading header/content_len --- 
+
+
+ --- reading payload --- 
+
+Raw-Packet: b"\x03001\x06Packet\x00\x00\x00\x014\x00\x00\x00\x014 just make this a new version at this point, we'll use version1. \n   And by the time all threads are closed, we can assume the client is Done.\n   \n\n==========================================================================\n      Monday: 09:27 July 28th \n==========================================================================\nSo I'm trying to think here in terms of multithreading. And these are the following thought patterns I can seem to figure out now at the moment:\n  i. When the client sends a list of the files the are about to send, we using multithreading to first create these folders and sub-directories.\n     This is during the Ack-Stage of the protocol. \n\n  ii. And then we can also use multithreading on the client side to stream these files too?? Seems logical and possible, that means the server will \n      also have to write the content using threads too. So for each file, we assign them a thread on the server, and on the client?? \n\n  iii. We can just make each file a thread, and new request to the s"

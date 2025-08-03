@@ -126,10 +126,6 @@ def decode_packet(packet: bytes) -> PacketInfo:
 
     version_len = struct.unpack("B", version_len)[0]
     version = packet[offset: offset + version_len]
-    print(f"Request Version: {version}")
-    if version != VERSION:
-        print(f"Invalid Version/Malformed Packet: {version.decode(FORMAT)}")
-        return
 
     offset += version_len
 
@@ -137,7 +133,6 @@ def decode_packet(packet: bytes) -> PacketInfo:
     offset += 1
     req_len = struct.unpack("B", req_len)[0]
     req_type = packet[offset: offset + req_len]
-    print(f"Request-Type: {req_type}")
     offset += req_len
 
     # Because the n_packets was encoded in BigEndian, we read the next for bytes
@@ -146,18 +141,15 @@ def decode_packet(packet: bytes) -> PacketInfo:
     sent_len = struct.unpack("!I", sent_len)[0]
 
     sent_packets = packet[offset:offset + sent_len]
-    print(f"Number of packets sent: {sent_packets}")
     offset += sent_len
 
     tag_len = packet[offset: offset + 4]
     offset += 4
     tag_len = struct.unpack("!I", tag_len)[0]
     tag = packet[offset: offset + tag_len]
-    print(f"Tag of current packet: {tag}")
     offset += tag_len
 
     data = packet[offset:]
-    print(f"Data inside packet:\n ==== \n {data} \n === \n")
 
     return PacketInfo(version.decode(FORMAT), req_type.decode(FORMAT), 
                       sent_packets.decode(FORMAT), tag.decode(FORMAT), 
