@@ -1,0 +1,6 @@
+build
+dist 
+server.spec 
+client.spec 
+**/__pycache__/
+**/.pytest_cache/
