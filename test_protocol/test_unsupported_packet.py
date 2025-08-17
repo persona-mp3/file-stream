@@ -8,10 +8,9 @@ from v2.constants.constants import (FORMAT, ENC_PACKET_REQ, ENC_PACKET_REQ_LEN)
 
 def encode_unsupported_version(packet_tag: int, sent_packets: int, data: bytes) -> bytes:
     """
-    Unit test for the decoding malformed packet. For this test, an unsupported parameter will be used
-    against it. 
+    Unit test for the decoding a packet with an unsupported version.
 
-    The decoder should raise an UnsupportedError when it detects this
+    The decoder should raise an ```UnsupportedError``` when it detects this
 
     Structure:
         (4B content-length/header) (1B version-len)(version)
@@ -22,10 +21,10 @@ def encode_unsupported_version(packet_tag: int, sent_packets: int, data: bytes) 
         (data)
 
     Returns:
-        Fully encoded packet with tampered data
+        Fully encoded packet with unsupported version
     """
 
-    UNSUPPORTED_VERSION = "New Version"
+    UNSUPPORTED_VERSION = "003"
 
     enc_sent = str(sent_packets).encode(FORMAT)
     sent_len = struct.pack("!I", len(enc_sent))
@@ -50,7 +49,7 @@ def encode_unsupported_version(packet_tag: int, sent_packets: int, data: bytes) 
 
 
 def test_corrupted_packet() -> None:
-    data = "This packet will be tampered with".encode(FORMAT)
+    data = "This packet will send a packet with a version of 003".encode(FORMAT)
     tag = 0
     sent = 0
     expected_data = encode_unsupported_version(tag, sent, data)

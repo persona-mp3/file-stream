@@ -31,6 +31,8 @@ VERSION_2 = "002"
 VERSIONS = {VERSION_1, VERSION_2}
 
 HEADER = 4  # first 4-bytes of content-length for binary serialised protocols
+PORT = 6000
+HOST = "0.0.0.0"
 
 FORMAT = "utf-8"  # encoding format is utf-8
 
@@ -38,10 +40,13 @@ ENC_VERSION_2 = VERSION_2.encode(FORMAT)
 VERSION_LEN = struct.pack("B", len(ENC_VERSION_2))
 
 # all constants with 'ack' prepended mainly refers to Ack-Request-Response
+ACK_VERSION_2 = f"{VERSION_2} \r\n".encode(FORMAT)
 ACK_REQ = "Acknowledge"
 ACK_RES = "Acknowledged"
 ACK_S = "200"  
 ACK_F = "400" 
+ENC_ACK_REQ = f"{ACK_REQ} \r\n".encode(FORMAT)
+ENC_ACK_RES = f"{ACK_RES} \r\n".encode(FORMAT)
 ENC_ACK_S = ACK_S.encode(FORMAT)
 ENC_ACK_F = ACK_F.encode(FORMAT)
 
@@ -68,9 +73,23 @@ ENC_MALF_RES_LEN: bytes = struct.pack("B", len(ENC_MALF_RES))
 
 # ============= CORRUPTED-RESPONSE ==========================
 CORRUPTED_RES = "Corrupted"  
-# MALF_CODE = "405"
-# ENC_MALF_RES: bytes = MALF_RES.encode(FORMAT)
-# ENC_MALF_RES_LEN: bytes = struct.pack("B", len(ENC_MALF_RES))
-#
+CORRUPTED_CODE = "399"
+ENC_CORRUPTED_RES = CORRUPTED_RES.encode(FORMAT)
+ENC_CORRUPTED_RES_LEN: bytes = struct.pack("B", len(ENC_CORRUPTED_RES))
 
+
+# ============= DISCONNECT REQUEST ==========================
+DISCONN_REQ = "Disconnect"
+DISCONN_CODE = "000"
+ENC_DISCONN_REQ = DISCONN_REQ.encode(FORMAT)
+ENC_DISCONN_LEN = struct.pack("B", len(ENC_DISCONN_REQ))
+
+# ============= UNSUPPORTED RESPONSE ==========================
+UNSUPPORTED_RES = "Unsupported"
+UNSUPPORTED_CODE = "444"
+ENC_UNSUPPORTED_RES = UNSUPPORTED_RES.encode(FORMAT)
+ENC_UNSUPPORTED_LEN = struct.pack("B", len(ENC_DISCONN_REQ))
+
+
+SUPPORTED_REQ_RES = {ACK_RES, ACK_REQ, OPP_RES, MALF_RES, PACKET_REQ, PACKET_RES, DISCONN_REQ}
 # ========== BASE BODY ===== 

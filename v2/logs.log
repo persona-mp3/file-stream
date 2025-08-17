@@ -1,0 +1,28 @@
+logger.logger  14/08/2025 03:12:57 PM : INFO : create_server -> server successfully created, at ('0.0.0.0', 6000)
+logger.logger  14/08/2025 03:15:25 PM : INFO : create_server -> server successfully created, at ('0.0.0.0', 6000)
+logger.logger  14/08/2025 03:21:54 PM : CRITICAL : create_client -> Error occured trying to create client, AF_INET address must be a pair (host, port)
+logger.logger  14/08/2025 03:22:23 PM : CRITICAL : create_client -> Error occured trying to create client, AF_INET address must be a pair (host, port)
+logger.logger  14/08/2025 03:23:24 PM : CRITICAL : create_client -> Error occured trying to create client, AF_INET address must be a pair (host, port)
+logger.logger  14/08/2025 03:24:20 PM : INFO : accept_clients -> New connection accepted from: ('127.0.0.1', 49687)
+logger.logger  14/08/2025 03:24:20 PM : INFO : create_client -> Client socket created successfully, connected at ('0.0.0.0', 6000)
+
+
+
+logger.logger  14/08/2025 03:26:44 PM : INFO : create_server -> server successfully created, at ('0.0.0.0', 6000)
+logger.logger  14/08/2025 03:28:11 PM : INFO : create_client -> Client socket created successfully, connected at ('0.0.0.0', 6000)
+logger.logger  14/08/2025 03:28:11 PM : INFO : main -> Data sent successfully
+logger.logger  14/08/2025 03:28:11 PM : INFO : accept_clients -> New connection accepted from: ('127.0.0.1', 49832)
+logger.logger  14/08/2025 03:28:11 PM : INFO : handle_client -> recvd: Hello from client, starting v2
+
+
+14/08/2025 03:35:43 PM : INFO :  -> server successfully created, at ('0.0.0.0', 6000)
+14/08/2025 03:36:19 PM : INFO :  -> Client socket created successfully, connected at ('0.0.0.0', 6000)
+14/08/2025 03:36:19 PM : INFO :  -> Data sent successfully
+14/08/2025 03:36:19 PM : INFO :  -> New connection accepted from: ('127.0.0.1', 50146)
+14/08/2025 03:36:19 PM : INFO :  -> recvd: Hello from client, starting v2
+15/08/2025 11:49:51 AM : INFO :  -> New connection accepted from: ('127.0.0.1', 50567)
+15/08/2025 11:49:51 AM : INFO :  -> recvd: Hello from client, starting v2
+
+
+
+

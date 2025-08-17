@@ -2,8 +2,8 @@ import struct
 import hashlib
 from typing import NamedTuple
 
-from ..logger.logger import create_logger
-from ..constants.constants import (
+from v2.logger.logger import create_logger
+from v2.constants.constants import (
     VERSION_1, VERSION_2,
     FORMAT, PACKET_REQ,
 )
@@ -89,7 +89,7 @@ def decoder(packet: bytes) -> PacketInfo:
         request_type = packet[offset: offset + request_len].decode(FORMAT)
         offset += request_len
 
-        if request_type not in REQUESTS:
+        if request_type not in REQUESTS or (request_type != PACKET_REQ):
             logger.info(f"Unsupported request-type: {request_type}, sending Unsupported")
             print(f"[INFO]: Request type: {request_type},  not supported\nSeding Unsupported response\n")
             raise UnsupportedError(f"Request type not supported, Got: {request_type}")

@@ -1,8 +1,8 @@
 import struct 
 import hashlib
 
-from ..logger.logger import create_logger
-from ..constants.constants import (
+from v2.logger.logger import create_logger
+from v2.constants.constants import (
     ENC_VERSION_2, VERSION_LEN, FORMAT, 
     ENC_PACKET_REQ, ENC_PACKET_REQ_LEN,
 )
@@ -65,7 +65,7 @@ def encoder(tag: int, sent: int, data: bytes) -> bytes:
 
     header = struct.pack("!I", len(payload))
     packet = header + payload
-    logger.info(f"Packet of {id} succesfully encoded")
+    logger.info("Packet of succesfully encoded")
     return packet
 
 
