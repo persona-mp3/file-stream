@@ -22,7 +22,7 @@ logger = create_logger()
 unsupported_res = res.unsupported_response()
 corrupted_res = res.corrupted_response()
 malformed_res = res.malformed_response()
-# =================================
+# ===============================================================================
 
 
 def create_server() -> socket.socket:
