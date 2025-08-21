@@ -1,0 +1,17 @@
+17/08/2025 07:54:35 PM : INFO :  -> server successfully created, at ('0.0.0.0', 6000)
+17/08/2025 07:54:41 PM : INFO :  -> Client socket created successfully, connected at ('0.0.0.0', 6000)
+17/08/2025 07:54:41 PM : INFO :  -> New connection accepted from: ('127.0.0.1', 36506)
+17/08/2025 07:54:41 PM : INFO :  -> sessionId: 22e9b494-bc7a-42fb-98ca-4d3a29f0acb6
+17/08/2025 07:54:41 PM : INFO :  -> Packet of succesfully encoded
+17/08/2025 07:54:41 PM : INFO :  -> Extracting payload
+17/08/2025 07:54:41 PM : DEBUG :  -> Sent Packets: 10
+17/08/2025 07:54:41 PM : DEBUG :  -> Packet-Tag: 10
+17/08/2025 07:54:41 PM : INFO :  -> Client packet decoded successfully
+21/08/2025 02:31:38 PM : INFO :  -> server successfully created, at ('0.0.0.0', 6000)
+21/08/2025 02:31:57 PM : INFO :  -> Client socket created successfully, connected at ('0.0.0.0', 6000)
+21/08/2025 02:31:57 PM : INFO :  -> New connection accepted from: ('127.0.0.1', 36204)
+21/08/2025 02:31:57 PM : INFO :  -> sessionId: 2ab0a7af-85ec-409c-9791-8523855da3a2
+21/08/2025 02:31:57 PM : INFO :  -> Packet of succesfully encoded
+21/08/2025 02:31:57 PM : INFO :  -> Extracting payload
+21/08/2025 02:31:57 PM : DEBUG :  -> Sent Packets: 10
+21/08/2025 02:31:57 PM : INFO :  -> Client packet decoded successfully

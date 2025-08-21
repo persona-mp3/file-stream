@@ -28,8 +28,6 @@ Contains all information about status codes, request types and encoded formats
 # Note: All responses except failed Ack-Responses, Unsupported and Operational can allow for a retrial, so it is crucial 
 # to not drop the connection with the client after sending such response
 # =============================================================================================
-#
-#
 # BINARY FRAMING
 # All Request types have their length-encoded into a single byte, which means 0 - 255 digits can be represented. 
 #

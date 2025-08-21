@@ -3,18 +3,13 @@ import uuid
 
 from ..logger.logger import create_logger
 from ..constants.constants import (
-    VERSION_LEN, ENC_VERSION_2, ENC_ACK_REQ, 
-    ACK_VERSION_2, FORMAT, ACK_S,
+    VERSION_LEN, ENC_VERSION_2, ENC_ACK_REQ, ACK_VERSION_2, FORMAT, ACK_S,
 
-    ENC_PACKET_RES, ENC_PACKET_RES_LEN, ENC_ACK_F,
+    ENC_PACKET_RES, ENC_PACKET_RES_LEN, ENC_ACK_F, ENC_OPP_RES_LEN, ENC_OPP_RES, 
+    OPP_CODE, ENC_UNSUPPORTED_RES, ENC_UNSUPPORTED_LEN, UNSUPPORTED_CODE, 
 
-    ENC_OPP_RES_LEN, ENC_OPP_RES, OPP_CODE,
-    ENC_UNSUPPORTED_RES, ENC_UNSUPPORTED_LEN, UNSUPPORTED_CODE, 
-
-    ENC_CORRUPTED_RES_LEN, ENC_CORRUPTED_RES, CORRUPTED_CODE,
-
-    ENC_MALF_RES_LEN, ENC_MALF_RES, MALF_CODE,
-    ENC_RETRY_RES, ENC_RETRY_RES_LEN, RETRY_CODE,
+    ENC_CORRUPTED_RES_LEN, ENC_CORRUPTED_RES, CORRUPTED_CODE, ENC_MALF_RES_LEN, 
+    ENC_MALF_RES, MALF_CODE, ENC_RETRY_RES, ENC_RETRY_RES_LEN, RETRY_CODE,
 )
 
 """
@@ -36,6 +31,7 @@ the current packet, it's own received packet and expected-packet
         (1B request-length)(request-type)(1B status-code-length)(status-code)
         (1B tag-len)(tag)(1B recvd-len)(recvd-packets)
         (1B expected-packet-len)(expected-packet)
+
 """
 
 logger = create_logger()
@@ -45,8 +41,8 @@ def ack_response(is_valid: bool) -> tuple[bytes, str]:
     """
     Creates an Ack-Response to send to client.
     If ```is_valid``` is set to False, and ack-status of 400 will be made which means 
-    that the server failed to Acknowledge the client and 200, otherwise with a ```session_id``` 
-    appended at the end of response. This response is delimited by a carriage return.
+    that the server failed to Acknowlegde the client and 200, otherwise with a ```session_id``` 
+    appended at the end of response. This repsonse is delimited by a carraige return.
 
     The Caller is responsible for validating the request first.
 
@@ -55,11 +51,8 @@ def ack_response(is_valid: bool) -> tuple[bytes, str]:
 
     Returns:
         fully encoded response, sessionId
-
     """
-
     session_id = f"{uuid.uuid4()} \r\n".encode(FORMAT)
-
     base_body = ACK_VERSION_2 + ENC_ACK_REQ 
     body = None
     if is_valid:

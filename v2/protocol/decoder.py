@@ -116,7 +116,7 @@ def decoder(packet: bytes) -> PacketInfo:
         packet_tag_len = struct.unpack("!I", packet_tag_len)[0]
         packet_tag = packet[offset: offset + packet_tag_len].decode(FORMAT)
         offset += packet_tag_len
-        logger.debug(f"Packet-Tag: {packet_tag}")
+        print(f"[DEBUG]: Packet-Tag: {packet_tag}")
 
         # === 5. Extracting sha256 checksum === 
         checksum_len = packet[offset: offset + 1]
@@ -141,5 +141,4 @@ def decoder(packet: bytes) -> PacketInfo:
 
     except struct.error as err:
         print(f"[CRITICIAL]: Error occured in decoding data:\n {err}")
-        logger.warn("Error in decoding entire packet")
         return PacketInfo("", "", "", "", "")

@@ -45,7 +45,6 @@ def create_server() -> socket.socket:
         s.bind(ADDR)
         s.listen(0)
         print(f"server successfully created, at {ADDR}")
-        print("\n===============================")
         logger.info(f"server successfully created, at {ADDR}")
         return s
     except Exception as err:
@@ -185,13 +184,12 @@ def start_protocol(client: socket.socket, session_id: str, cwd: str, author: str
 
     except dec.UnsupportedError:
         client.sendall(unsupported_res)
-        print("closing connection due to unsupported response")
-        client.close()
+        # client.close()
 
     except dec.CorruptionError:
         client.sendall(corrupted_res)
         print("closing connection due to corrupted data")
-        client.close()
+        # client.close()
 
     except dec.DecoderError:
         client.sendall(malformed_res)
@@ -207,7 +205,7 @@ def main() -> None:
         print("Quiting server...")
     except Exception as e:
         logger.warning(e)
-        print(e)
+        print("An error occured:\n {e}")
 
 
 if __name__ == "__main__":

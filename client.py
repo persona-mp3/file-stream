@@ -170,9 +170,6 @@ def main() -> None:
         logger.info("Closing connection due to SIGINT")
         print("Closing connection")
         exit(0)
-    except Exception as e:
-        logger.warning(e)
-        exit(1)
 
 
 if __name__ == "__main__":
