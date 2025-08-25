@@ -11,8 +11,7 @@ from v2.responses import response as res
 from v2.utils import utils as utils
 from v2.protocol import decoder as dec
 from v2.constants.constants import (
-    HEADER, FORMAT, HOST, PORT, VERSIONS, SUPPORTED_REQ_RES, 
-    ENC_PACKET_REQ_LEN, ENC_PACKET_REQ
+    HEADER, FORMAT, HOST, PORT, VERSIONS, SUPPORTED_REQ_RES, ENC_PACKET_REQ
 )
 
 ADDR = (HOST, PORT)
@@ -72,6 +71,7 @@ def accept_clients(s: socket.socket) -> None:
                 for conn in ready_conns:
                     client, addr = conn.accept()
                     logger.info(f"New connection accepted from: {addr}")
+                    print("New connection:", addr)
                     # using multithreading to spin up new threads per client,as .accept() is blocking
                     thread = threading.Thread(target=handle_client, args=(client, ))
                     thread.start()
@@ -142,7 +142,6 @@ def handle_client(client: socket.socket) -> None:
 
 
 def start_protocol(client: socket.socket, sesssion_id: str, author: str, n_packets: str, cwd: str) -> None:
-    print(threading.current_thread())
     """
     Responsible for decoding data sent by clients and writing them to file
 
@@ -182,8 +181,8 @@ def start_protocol(client: socket.socket, sesssion_id: str, author: str, n_packe
             break
 
         except dec.SupportedDisconnect as e:
-            print(e)
             client.close()
+            logger.info(e)
             break
 
         except dec.UnsupportedError:

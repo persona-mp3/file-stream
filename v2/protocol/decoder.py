@@ -95,7 +95,7 @@ def decoder(packet: bytes) -> PacketInfo:
             raise UnsupportedError(f"Request type not supported, Got: {request_type}")
         elif (request_type == DISCONN_REQ):
             logger.info("Client initiating close")
-            raise SupportedDisconnect("Client initiating close")
+            raise SupportedDisconnect("Closing connection")
 
             # === 3. Decoding sent packets === 
         sent_packets_len = packet[offset: offset + 4]

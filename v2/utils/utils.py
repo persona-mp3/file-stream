@@ -59,7 +59,6 @@ def find_parent(file_path: str) -> tuple[str, str]:
 
     """
 
-    print("\n\n === finding parent === \n\n")
     positions: list = []
 
     # The finditer(substr, str) recursively searches a string against the substr. 
@@ -93,7 +92,6 @@ def create_parents(CWD: str, nested_folder: str, file: str) -> Path:
     try:
         os.makedirs(base_path, mode=0o777, exist_ok=True)
         full_path = Path.cwd() / base_path / file
-        print(f"Path to nested_folder, {full_path}")
         return full_path 
     except Exception as e:
         print(repr(e))
