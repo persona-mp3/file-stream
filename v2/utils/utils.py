@@ -4,8 +4,18 @@ import re
 import socket 
 import struct
 from typing import Union, IO
+from v2.constants.constants import (MAX_PAYLOAD)
 
 HEADER = 4  # content-length to read from client data
+
+
+class MaxPayload(Exception):
+    """
+    Used when a client tries to send a huge ton 
+    of data over the connection, potenitally to DDOS.
+    The connection should be dropped instantly. 
+    """
+    pass
 
 
 def create_client(ADDR: Union[str, int]) -> socket:
@@ -64,7 +74,6 @@ def find_parent(file_path: str) -> tuple[str, str]:
 
     nested_folders = file_path[:positions[-1]]
     file = file_path[positions[-1]:]
-    print(f"Nested_Folder {nested_folders}, File: {file}")
     return (nested_folders, file)
 
 
@@ -78,7 +87,6 @@ def create_parents(CWD: str, nested_folder: str, file: str) -> Path:
     Returns:
         - Appended path to the expected file
     """
-    print("\n\n === creating nested directories === \n\n")
 
     # to make sure that the files and folders are made inside the users own folder on the machine 
     base_path = os.path.join(CWD, nested_folder)
@@ -101,15 +109,16 @@ def get_all_files() -> list[str]:
     """
     CWD = Path.cwd()
     ready_files = []
-    IGNORE_FILES = {"__pycache__", ".pytest_cache", "node_modules", "package-lock.json", "client", "client.py"}
-    IGNORE_EXTENSIONS = {".png", ".jpg"}
+    IGNORE_FILES = {"__pycache__", ".pytest_cache", "node_modules", "package-lock.json", "client", "client.py", ".ssid", "logs.txt"}
+    IGNORE_EXTENSIONS = {".png", ".jpg", ".log"}
 
     for file in CWD.rglob("*"):
-        if (".git" not in file.parts 
-                and not any(part in IGNORE_FILES for part in file.parts)
-                and not any(part in IGNORE_EXTENSIONS for part in file.parts)
-                and file.is_file()
-                ):
+        if (
+            ".git" not in file.parts and
+            not any(part in IGNORE_FILES for part in file.parts) and
+            not any(part in IGNORE_EXTENSIONS for part in file.parts) and
+            file.is_file()
+        ):
             ready_files.append(str(file.relative_to(CWD)))
 
     return ready_files
@@ -127,7 +136,7 @@ def get_payload(s: socket.socket) -> bytes:
         payload in bytes
     """
     if not isinstance(s, socket.socket):
-        raise ValueError("Expected socket.socket, got", isinstance(s))
+        raise ValueError("Expected socket.socket, got", type(s))
 
     try:
         content_len: bytes = b''
@@ -145,3 +154,48 @@ def get_payload(s: socket.socket) -> bytes:
         return payload
     except Exception as e:
         print("An error occured in getting content-length from the socket provided", e)
+
+
+def recv_payload(s: socket.socket) -> bytes | None:
+    if not isinstance(s, socket.socket):
+        raise ValueError("Expected type of socket.socket, got:", type(s))
+        return
+
+    try: 
+        content_len = b''
+        while len(content_len) < HEADER:
+            chunk = s.recv(HEADER - len(content_len))
+            content_len += chunk
+
+        content_len = struct.unpack("!I", content_len)[0]
+
+        if content_len > MAX_PAYLOAD:
+            raise MaxPayload(f"Client has sent too much data of size {content_len}")
+        # extracting payload
+        payload = b''
+        while len(payload) < content_len:
+            chunk = s.recv(content_len - len(payload))
+            payload += chunk
+
+        return payload
+    except ConnectionResetError:
+        print("Connection has been disconnected")
+        return
+    except Exception as e:
+        print("An unexpected error occured in utils.recv_payload\n:", e)
+        return
+
+
+def reader(file_name: str) -> list[bytes]:
+    CHUNK = 2000
+    try:
+        content: list[bytes] = []
+        with open(file_name, "rb") as f:
+            while True:
+                chunk = f.read(CHUNK)
+                if not chunk:
+                    break
+                content.append(chunk)
+        return content
+    except Exception as e:
+        print(f"Unexpected error occcured in trying to read: {file_name}:\n {e}")

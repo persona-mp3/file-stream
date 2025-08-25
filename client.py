@@ -1,22 +1,27 @@
 import struct
 import socket
+import threading
 import sys
+import os
 from pathlib import Path
 
 
+from v2.utils import utils as utils
 from v2.protocol import encoder as enc
 from v2.protocol import packet_status as ps
 from v2.requests import request as req
 from v2.logger.logger import create_logger
 from v2.constants.constants import (
-    HEADER, FORMAT, VERSIONS, PORT, HOST,
-    SUPPORTED_REQ_RES, CLOSE_CONNECTION,
-    ACK_S, ENC_PACKET_REQ_LEN, ENC_PACKET_REQ
+    HEADER, FORMAT, VERSIONS, PORT, HOST, SUPPORTED_REQ_RES, CLOSE_CONNECTION, ACK_S, RETRY_CODE
 )
 
 ADDR = (HOST, PORT)
 
 logger = create_logger()
+
+# =========== Commonn Requests sent ==============
+DISCONN = req.disconnect_request()
+# ================================================
 
 
 def create_client() -> socket.socket:
@@ -33,10 +38,7 @@ def create_client() -> socket.socket:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # s.create_connection(ADDR, timeout=6)
-        # s.settimeout(None)
         s.connect(ADDR)
-        print(f"Client socket created successfully, connected at {ADDR}")
         logger.info(f"Client socket created successfully, connected at {ADDR}")
         return s
     except Exception as err:
@@ -55,7 +57,6 @@ def get_acked(s: socket.socket, n_packets: int, file_name: str) -> tuple[bool, s
     is_acked = True
     CWD = f"{Path.cwd().name}"
     request = req.ack_request(file_name, CWD, n_packets)
-    print("request to send->", request)
 
     s.sendall(request)
 
@@ -66,8 +67,6 @@ def get_acked(s: socket.socket, n_packets: int, file_name: str) -> tuple[bool, s
 
     try: 
         content_len = struct.unpack("!I", content_len)[0]
-        print("Content-length of ack-response:", content_len)
-        print("Extracting response")
 
         response = b''
         while len(response) < content_len:
@@ -76,27 +75,31 @@ def get_acked(s: socket.socket, n_packets: int, file_name: str) -> tuple[bool, s
 
         response = response.decode(FORMAT)
         response = [field for field in response.split(" \r\n") if field.strip()]
-        print("Response fields -> ", response)
 
         if response[0] not in VERSIONS:
             logger.warning(f"Unknown version from server: {response[0]}")
             print("Server sent an invalid version: ", response[0])
+            s.close()
         elif response[1] not in SUPPORTED_REQ_RES:
             logger.warning(f"Unknown reponse from server: {response[1]}")
             print(f"Server sent an unknown response-type: {response[1]}")
+            s.close()
 
-        print("Valid response from server")
         if response[2] != ACK_S:
             print("Server invalidated out request")
             return (not is_acked, "")
 
-        print("Full Response Details\n")
-        print(f"Version -> {response[0]}")
-        print(f"Response -> {response[1]}")
-        print(f"Status -> {response[2]}")
-        print(f"SessionId-> {response[3]}")
-        print("Begin protcol with server")
+        #
+        # version: response[0]
+        # response: response[1]
+        # status: response[2]
+        # session_id: response[3]
+        #
         session_id = response[3]
+
+        with open(".ssid", "w") as f:
+            f.write(f"{session_id}\n")
+
         return (is_acked, session_id)
 
     except struct.error as err:
@@ -114,62 +117,93 @@ def streamer(file_name: str) -> None:
 
     if not isinstance(file_name, str):
         raise ValueError("Expected type of str, got", type(file_name))
-        return
 
-    # ========== test data =========
-    data = "The Joe Roegan Experience #225".encode(FORMAT)
-    tag = 10 
-    sent = 10 
-    author = "main.go"
-    n_packets = 12
+    enc_data = utils.reader(file_name)
 
-    ack_status = get_acked(s, n_packets, author)
+    # ========= encode data ==========
+    N_PACKETS = len(enc_data)
+    author = file_name
 
     # ========== get acked ===========
+    ack_status = get_acked(s, N_PACKETS, author)
     is_acked = ack_status[0]
     if not is_acked:
         print("fatal: could not get acked by server", is_acked)
         return
 
-    # ========= encode data ==========
-    req = enc.encoder(tag, sent, data)
-    s.sendall(req)
+    sent_packets = 1
+    sync = 0
 
-    # ======= wait for response ==== 
-    content_len = b''
-    while len(content_len) < HEADER:
-        chunk = s.recv(HEADER - len(content_len))
-        content_len += chunk
+    while sync < len(enc_data):
+        packet_req = enc.encoder(sync, sent_packets, enc_data[sync])
+        s.sendall(packet_req)
 
-    content_len = struct.unpack("!I", content_len)[0]
+        # wait on servers response
+        try:
+            response = utils.recv_payload(s)
+            status_code, payload = ps.controller(response)
+            if status_code in CLOSE_CONNECTION and len(payload) == 0:
+                s.close()
+                break
+            elif status_code == RETRY_CODE:
+                print("Retrial requested", status_code, payload)
+                s.sendall(packet_req)
+            elif status_code == ACK_S:
+                sync += 1
+                sent_packets += 1
+                continue
 
-    response = b''
-    while len(response) < content_len:
-        chunk = s.recv(content_len - len(response))
-        response += chunk
+        except utils.MaxPayload:
+            print("Server tried to send too much data. Closing connection")
 
-    # getting information on the type of response sent by server:
-    status_code, payload = ps.controller(response)
-    print("total-response", response)
-    print(f"status-code:{status_code}\npayload: {payload}")
-    if status_code in CLOSE_CONNECTION and len(payload) == 0:
-        logger.warning(f"Closing connection with server due to: {status_code}")
-        s.close()
+    # once this request has been recieved by the server, they should close the connection instead 
+    # As if we close the connection first, the server might be left hanging 
+    s.sendall(DISCONN)
 
 
 def main() -> None:
+    man = """ 
+    Usage: 
+    Send all files in current directory except .git files 
+                ren .
+
+    Send specific files that exists in current directory. If file does not exists, it simply skips it
+                ren foo.txt bar.txt main.go
+    Sends foo.txt, bar.txt and main.go
+    """
     try:
         if len(sys.argv) < 2:
             print("fatal: no arguments passed in")
+            print(man)
             exit(1)
 
         if sys.argv[1] == ".":
             print("Sending all files")
-            streamer("mock")
+            files: list[str] = utils.get_all_files()
+            for file in files:
+                print("streaming", file)
+
+                thread = threading.Thread(target=streamer, args=(file, ))
+                thread.start()
+                # streamer(file)
+        elif sys.argv[1] != "." and len(sys.argv) > 1:
+            for file in sys.argv[1:]:
+                if os.path.exists(file):
+                    streamer(file)
+                else:
+                    print(f"fatal: {file} does not exist")
+        else:
+            print("fatal: invalid arguments passed")
+            print(man)
+            exit(1)
+
     except KeyboardInterrupt:
         logger.info("Closing connection due to SIGINT")
         print("Closing connection")
         exit(0)
+    except Exception as e:
+        logger.warning(e)
+        exit(1)
 
 
 if __name__ == "__main__":

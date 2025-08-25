@@ -28,6 +28,8 @@ Contains all information about status codes, request types and encoded formats
 # Note: All responses except failed Ack-Responses, Unsupported and Operational can allow for a retrial, so it is crucial 
 # to not drop the connection with the client after sending such response
 # =============================================================================================
+#
+#
 # BINARY FRAMING
 # All Request types have their length-encoded into a single byte, which means 0 - 255 digits can be represented. 
 #
@@ -43,6 +45,7 @@ VERSIONS = {VERSION_1, VERSION_2}
 HEADER = 4  # first 4-bytes of content-length for binary serialised protocols
 PORT = 6000
 HOST = "0.0.0.0"
+MAX_PAYLOAD = 2 << 15
 
 FORMAT = "utf-8"  # encoding format is utf-8
 
@@ -108,5 +111,6 @@ ENC_UNSUPPORTED_LEN = struct.pack("B", len(ENC_DISCONN_REQ))
 
 
 SUPPORTED_REQ_RES = {ACK_RES, ACK_REQ, OPP_RES, MALF_RES, PACKET_REQ, PACKET_RES, DISCONN_REQ}
-CLOSE_CONNECTION = {OPP_RES}
+# client will close connections based on the status-code of each response from the server
+CLOSE_CONNECTION = {OPP_CODE}
 # ========== BASE BODY ===== 

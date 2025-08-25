@@ -33,7 +33,10 @@ def ack_request(author: str, CWD: str, n_packets=int) -> bytes:
 
 def disconnect_request() -> bytes:
     """Sends a disconnection request to server with status code of 000"""
-    payload = VERSION_LEN + ENC_VERSION_2 + ENC_DISCONN_LEN + ENC_DISCONN_REQ + DISCONN_CODE.encode(FORMAT)
+    payload = (
+        VERSION_LEN + ENC_VERSION_2 + ENC_DISCONN_LEN + ENC_DISCONN_REQ +
+        struct.pack("B", len(DISCONN_CODE.encode(FORMAT))) + DISCONN_CODE.encode(FORMAT)
+    )
     header = struct.pack("!I", len(payload))
 
     request = header + payload 

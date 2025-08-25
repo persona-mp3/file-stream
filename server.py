@@ -4,13 +4,14 @@ import struct
 import threading 
 import os
 
+from pathlib import Path
 
 from v2.logger.logger import create_logger
 from v2.responses import response as res
+from v2.utils import utils as utils
 from v2.protocol import decoder as dec
 from v2.constants.constants import (
-    HEADER, FORMAT,
-    HOST, PORT, VERSIONS, SUPPORTED_REQ_RES, 
+    HEADER, FORMAT, HOST, PORT, VERSIONS, SUPPORTED_REQ_RES, 
     ENC_PACKET_REQ_LEN, ENC_PACKET_REQ
 )
 
@@ -22,7 +23,8 @@ logger = create_logger()
 unsupported_res = res.unsupported_response()
 corrupted_res = res.corrupted_response()
 malformed_res = res.malformed_response()
-# =================================
+operational_res = res.operational_response()
+# ===============================================================================
 
 
 MAX_PAYLOAD = 2 << 10
@@ -44,8 +46,8 @@ def create_server() -> socket.socket:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(ADDR)
         s.listen(0)
-        print(f"server successfully created, at {ADDR}")
         logger.info(f"server successfully created, at {ADDR}")
+        print("server running")
         return s
     except Exception as err:
         logger.critical(f"Error occured trying to create server, {err}")
@@ -70,12 +72,9 @@ def accept_clients(s: socket.socket) -> None:
                 for conn in ready_conns:
                     client, addr = conn.accept()
                     logger.info(f"New connection accepted from: {addr}")
-                    print(f"New connection accepted from: {addr}")
-
                     # using multithreading to spin up new threads per client,as .accept() is blocking
                     thread = threading.Thread(target=handle_client, args=(client, ))
                     thread.start()
-                    print(f"active-connections: {threading.active_count() - 1}")
     except Exception as err:
         logger.warn(f"Unexpected error occured: {err}")
 
@@ -100,7 +99,6 @@ def handle_client(client: socket.socket) -> None:
             content_len += chunk
 
         content_len = struct.unpack("!I", content_len)[0]
-        print("Content-length from client:", content_len)
 
         request = b''
         while len(request) < content_len:
@@ -109,7 +107,6 @@ def handle_client(client: socket.socket) -> None:
 
         request = request.decode(FORMAT)
         request = [field for field in request.split(" \r\n") if field.strip()]
-        print(f"Clients ack-request:\n {request}")
 
         if request[0] not in VERSIONS or request[1] not in SUPPORTED_REQ_RES:
             print("Unsupported version or request, sending unsupported response", request[0], request[1])
@@ -138,63 +135,75 @@ def handle_client(client: socket.socket) -> None:
 
         os.makedirs(client_cwd, mode=0o777, exist_ok=True)
 
-        start_protocol(client, session_id, client_cwd, author, n_packets)
+        start_protocol(client, session_id, author, n_packets, client_cwd)
 
     except Exception as err:
         print("Unexpected error: \n", err)
 
 
-def start_protocol(client: socket.socket, session_id: str, cwd: str, author: str, n_packets: str) -> any:
+def start_protocol(client: socket.socket, sesssion_id: str, author: str, n_packets: str, cwd: str) -> None:
+    print(threading.current_thread())
     """
     Responsible for decoding data sent by clients and writing them to file
 
     Callers:
         ```handle_client()```
     """
-    print("Starting protocol...")
-    # Get payload from client
-    content_len = b''
-    while len(content_len) < HEADER:
-        chunk = client.recv(HEADER - len(content_len))
-        content_len += chunk
 
-    content_len = struct.unpack("!I", content_len)[0]
-    if content_len > MAX_PAYLOAD:
-        logger.warn(f"Client is sending too much data of size: {content_len}, drop connection")
-        # TODO: create a too-large response, but this should be also be implemented on the client instead
-        client.close()
-        return
+    expected_packets = int(n_packets)
+    start = 0
+    while start <= expected_packets:
+        try:
+            # decoder() -> (version, request_type, sent_packets, packet_tag, data) all in str
+            # for now we'll only use the sent-packets, packet-tag and data as checksum validation is handled 
+            # by decoder()
+            # ======= 1. Recv data =====
+            payload = utils.recv_payload(client)
+            _, _, sent_packets, packet_tag, data = dec.decoder(payload)
 
-    logger.info("Extracting payload")
-    payload = b''
-    while len(payload) < content_len:
-        chunk = client.recv(content_len - len(payload))
-        payload += chunk
+            # ======= 2. Begin file operations =====
+            full_path = None
+            if "/" in author:
+                nested_folder, nested_child = utils.find_parent(author)
+                full_path = utils.create_parents(cwd, nested_folder, nested_child)
+            else:
+                full_path = Path.cwd() / cwd / author
 
-    try:
-        # decoder() -> (version, request_type, sent_packets, packet_tag, data) all in str
-        # for now we'll only use the sent-packets, packet-tag and data as checksum validation is handled 
-        # by decoder()
-        _, _, sent_packets, packet_tag, data = dec.decoder(payload)
+            with full_path.open("a") as f:
+                f.write(data)
 
-        # ========= Write data to file and send Packet-status response to client ====== 
-        packet_status = res.packet_stats2(int(packet_tag), 20, False)
-        print("sending successfull packet-status")
-        client.sendall(packet_status)
+            # ======= 3. Send packet status =====
+            packet_stats = res.packet_stats2(int(packet_tag), start, False)
+            client.sendall(packet_stats)
+            start += 1
+        except utils.MaxPayload as e:
+            logger.warning(e)
+            client.close()
+            break
 
-    except dec.UnsupportedError:
-        client.sendall(unsupported_res)
-        # client.close()
+        except dec.SupportedDisconnect as e:
+            print(e)
+            client.close()
+            break
 
-    except dec.CorruptionError:
-        client.sendall(corrupted_res)
-        print("closing connection due to corrupted data")
-        # client.close()
+        except dec.UnsupportedError:
+            client.sendall(unsupported_res)
+            print("closing connection due to unsupported response")
+            client.close()
+            break
 
-    except dec.DecoderError:
-        client.sendall(malformed_res)
-        print("closing connection due to decoder error")
-        # client.close()
+        except dec.CorruptionError:
+            client.sendall(corrupted_res)
+            # print("closing connection due to corrupted data")
+            packet_stats = res.packet_stats2(int(packet_tag), start, True)
+            client.sendall(packet_stats)
+
+        except dec.DecoderError:
+            client.sendall(malformed_res)
+            print("closing connection due to decoder error")
+            packet_stats = res.packet_stats2(int(packet_tag), start, True)
+            client.sendall(packet_stats)
+            break
 
 
 def main() -> None:
@@ -203,9 +212,10 @@ def main() -> None:
         accept_clients(s)
     except KeyboardInterrupt:
         print("Quiting server...")
+        exit(0)
     except Exception as e:
         logger.warning(e)
-        print("An error occured:\n {e}")
+        exit(1)
 
 
 if __name__ == "__main__":
