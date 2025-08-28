@@ -26,7 +26,7 @@ def encoder(tag: int, sent: int, data: bytes) -> bytes:
     Structure:
         (4B content-length) (1B version-length)(version)
         (1B request-length) (request-type)
-        (4B sent-length)(sent) (4B tag-length)(tag) 
+        (1B sent-length)(sent) (1B tag-length)(tag) 
         (1B hash-length)(sha256 hash)
         (data)
 
