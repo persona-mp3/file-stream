@@ -1,9 +1,8 @@
 services:
   redis:
     build: . 
-    # container-name: "wsl-redis"
     ports:
-      - "6380:6380"
+      - "6380:6379"
     volumes:
       - redis-data:/data
 

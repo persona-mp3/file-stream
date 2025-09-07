@@ -4,8 +4,6 @@ server.spec
 client.spec 
 **/__pycache__/
 **/.pytest_cache/
-tcp2
-tcp 
 rec.sh
 .ssid
 logs.txt

@@ -183,3 +183,35 @@ def malformed_response() -> bytes:
     header = struct.pack("!I", len(payload))
     response = header + payload
     return response
+
+
+def accept_reconnect(is_valid: bool) -> tuple[bytes, str]:
+    """
+    Creates an Ack-Response to send to client.
+    If ```is_valid``` is set to False, and ack-status of 400 will be made which means 
+    that the server failed to Acknowledge the client and 200, otherwise with a ```session_id``` 
+    appended at the end of response. This response is delimited by a carriage return.
+
+    The Caller is responsible for validating the request first.
+
+    Structure:
+        (version)(response-type)(status)(session-id?)
+
+    Returns:
+        fully encoded response, sessionId
+
+    """
+
+    session_id = f"{uuid.uuid4()} \r\n".encode(format)
+    base_body = ACK_VERSION_2 + ENC_ACK_REQ 
+    body = None
+    if is_valid:
+        body = f"{ACK_S} \r\n".encode(FORMAT) + session_id
+    else:
+        body = ENC_ACK_F 
+
+    payload = base_body + body
+
+    header = struct.pack("!I", len(payload))
+    response = header + payload
+    return (response, session_id.decode(FORMAT).rstrip(" \r\n"))

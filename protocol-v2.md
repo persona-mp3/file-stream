@@ -78,7 +78,8 @@ All other length fields are encoded in a single-byte which can represent from 0-
 3. ## Packet-Status Response
     Used to inform the client on every packet receieved, whether successful or failed.
     The ```Packet-Status``` Response could also tell the client to resend a packet. 
-    A ```Status-Code``` of ```200``` means the client can send the next packet, and ```201``` means ```Retry```. And instead of ```Packet-Status``` it will be a ```Retrial``` in the response to the client.
+    A ```Status-Code``` of ```200``` means the client can send the next packet, and ```201``` means ```Retry```. 
+    And instead of ```Packet-Status``` it will be a ```Retrial``` in the response to the client.
 
 
     ```
