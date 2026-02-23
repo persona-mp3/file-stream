@@ -36,17 +36,14 @@ def encoder(tag: int, sent: int, data: bytes) -> bytes:
     if not isinstance(data, bytes):
         logger.error(f"Expected data of type bytes, got: {type(data)}")
         raise ValueError(f"Expected data of type bytes, got: {type(data)}")
-        return b''
 
     if not isinstance(tag, int):
         logger.error(f"Expected tag of type int, got: {type(tag)}")
         raise ValueError(f"Expected tag of type int, got: {type(tag)}")
-        return b''
 
     if not isinstance(sent, int):
         logger.error(f"Expected sent of type int, got: {type(sent)}")
         raise ValueError("Expected sent of type int, got: {type(sent)}")
-        return b''
 
     enc_tag = str(tag).encode(FORMAT)
     enc_sent = str(sent).encode(FORMAT)
